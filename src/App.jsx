@@ -435,8 +435,24 @@ const App = () => {
   };
 
   const handleCopyAddress = (address) => {
-    setCopiedAddress(address);
-    setTimeout(() => setCopiedAddress(null), 2000);
+    navigator.clipboard.writeText(address)
+      .then(() => {
+        setCopiedAddress(address);
+        setTimeout(() => setCopiedAddress(null), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+        // Fallback untuk browser lama
+        const textArea = document.createElement('textarea');
+        textArea.value = address;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        setCopiedAddress(address);
+        setTimeout(() => setCopiedAddress(null), 2000);
+      });
   };
 
   const handleMint = async () => {
@@ -585,8 +601,7 @@ const App = () => {
                 <div className="logo-glow"></div>
               </div>
               <div className="title-container">
-                <h1>O2 Token Dashboard</h1>
-                <p className="subtitle">"Oxygen is Vital. Never Sell. It's Not About Riches, It's About Wealth"</p>
+                <h1>O2 Token</h1>
               </div>
             </div>
             
@@ -609,16 +624,25 @@ const App = () => {
                   <ExternalLink size={16} />
                 </button>
               </div>
-              <p className="contract-address">
-                {CONTRACT_ADDRESS.substring(0, 10)}...{CONTRACT_ADDRESS.substring(CONTRACT_ADDRESS.length - 8)}
-                <button 
-                  onClick={() => handleCopyAddress(CONTRACT_ADDRESS)} 
-                  className="copy-btn small"
-                  disabled={isLoading}
+              <div className="contract-address">
+                <span className="address-text">
+                  {CONTRACT_ADDRESS.substring(0, 10)}...{CONTRACT_ADDRESS.substring(CONTRACT_ADDRESS.length - 8)}
+                </span>
+                <CopyToClipboard 
+                  text={CONTRACT_ADDRESS} 
+                  onCopy={() => handleCopyAddress(CONTRACT_ADDRESS)}
                 >
-                  <Copy size={14} /> Copy
-                </button>
-              </p>
+                  <button 
+                    className="copy-btn small"
+                    disabled={isLoading}
+                  >
+                    <Copy size={14} /> Copy
+                    {copiedAddress === CONTRACT_ADDRESS && (
+                      <span className="copied-text">Copied!</span>
+                    )}
+                  </button>
+                </CopyToClipboard>
+              </div>
             </div>
           </div>
           
@@ -639,13 +663,14 @@ const App = () => {
                 </div>
                 <p className="account-address">
                   {account.substring(0, 6)}...{account.substring(account.length - 4)}
-                  <button 
-                    onClick={() => handleCopyAddress(account)} 
-                    className="copy-btn"
-                    disabled={isLoading}
+                  <CopyToClipboard 
+                    text={account} 
+                    onCopy={() => handleCopyAddress(account)}
                   >
-                    <Copy size={14} />
-                  </button>
+                    <button className="copy-btn" disabled={isLoading}>
+                      <Copy size={14} />
+                    </button>
+                  </CopyToClipboard>
                   {copiedAddress === account && <span className="copied-text">Copied!</span>}
                 </p>
                 <p className="token-balance">
